@@ -206,7 +206,7 @@ impl DeviceObjects {
         ));
 
         let program = try!(compile_default_program(ctx));
-        let texture = try!(im_gui.prepare_texture(|handle| {
+        let texture = try!(im_gui.prepare_rgba32_font_texture(|handle| {
             let data = RawImage2d {
                 data: Cow::Borrowed(handle.pixels),
                 width: handle.width,
@@ -215,7 +215,7 @@ impl DeviceObjects {
             };
             Texture2d::new(ctx, data)
         }));
-        im_gui.set_texture_id(texture.get_id() as usize);
+        im_gui.set_font_texture_id(texture.get_id() as usize);
 
         Ok(DeviceObjects {
             vertex_buffer: vertex_buffer,

@@ -110,7 +110,7 @@ impl<R: Resources> Renderer<R> {
             gfx::memory::Usage::Dynamic,
             Bind::empty(),
         )?;
-        let (_, texture) = imgui.prepare_texture(|handle| {
+        let (_, texture) = imgui.prepare_rgba32_font_texture(|handle| {
             factory.create_texture_immutable_u8::<gfx::format::Rgba8>(
                 gfx::texture::Kind::D2(
                     handle.width as u16,

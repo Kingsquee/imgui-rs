@@ -93,7 +93,8 @@ impl ImGui {
     fn io_mut(&mut self) -> &mut sys::ImGuiIO { unsafe { &mut *sys::igGetIO() } }
     pub fn style(&self) -> &ImGuiStyle { unsafe { &*sys::igGetStyle() } }
     pub fn style_mut(&mut self) -> &mut ImGuiStyle { unsafe { &mut *sys::igGetStyle() } }
-    pub fn prepare_texture<'a, F, T>(&mut self, f: F) -> T
+    
+    pub fn prepare_rgba32_font_texture<'a, F, T>(&mut self, f: F) -> T
     where
         F: FnOnce(TextureHandle<'a>) -> T,
     {
@@ -117,7 +118,33 @@ impl ImGui {
             })
         }
     }
-    pub fn set_texture_id(&mut self, value: usize) {
+    
+    pub fn prepare_alpha8_font_texture<'a, F, T>(&mut self, f: F) -> T
+    where
+        F: FnOnce(TextureHandle<'a>) -> T,
+    {
+        let io = self.io();
+        let mut pixels: *mut c_uchar = ptr::null_mut();
+        let mut width: c_int = 0;
+        let mut height: c_int = 0;
+        let mut bytes_per_pixel: c_int = 0;
+        unsafe {
+            sys::ImFontAtlas_GetTexDataAsAlpha8(
+                io.fonts,
+                &mut pixels,
+                &mut width,
+                &mut height,
+                &mut bytes_per_pixel,
+            );
+            f(TextureHandle {
+                width: width as u32,
+                height: height as u32,
+                pixels: slice::from_raw_parts(pixels, (width * height * bytes_per_pixel) as usize),
+            })
+        }
+    }
+    
+    pub fn set_font_texture_id(&mut self, value: usize) {
         unsafe {
             (*self.io_mut().fonts).tex_id = value as *mut c_void;
         }
