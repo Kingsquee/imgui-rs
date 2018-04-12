@@ -82,6 +82,51 @@ pub fn get_version() -> &'static str {
     }
 }
 
+pub struct FontBuilder<'a> {
+    io: &'a sys::ImGuiIO,
+    cfg: sys::ImFontConfig
+}
+
+impl <'a> FontBuilder<'a> {
+    pub fn size_pixels(&mut self, value: f32) {
+        self.cfg.size_pixels = value;
+    }
+    pub fn oversample(&mut self, value: (i32, i32)) {
+        self.cfg.oversample_h = value.0;
+        self.cfg.oversample_v = value.1;
+    }
+    pub fn horizontal_pixel_snap(&mut self, value: bool) {
+        self.cfg.pixel_snap_h = value;
+    }
+    pub fn glyph_extra_spacing(&mut self, value: ImVec2) {
+        self.cfg.glyph_extra_spacing = value;
+    }
+    pub fn glyph_offset(&mut self, value: ImVec2) {
+        self.cfg.glyph_offset = value;
+    }
+    /*pub glyph_ranges(&mut self, value: /*???*/) {
+        //TODO
+    }*/
+    pub fn merge_mode(&mut self, value: bool) {
+        self.cfg.merge_mode = value;
+    }
+    pub fn rasterizer_multiply(&mut self, value: f32) {
+        self.cfg.rasterizer_multiply = value;
+    }
+    pub fn build(&mut self) {
+        let _im_font = unsafe {
+            sys::ImFontAtlas_AddFontFromMemoryTTF(
+                self.io.fonts,
+                self.cfg.font_data,
+                self.cfg.font_data_size,
+                self.cfg.size_pixels,
+                ptr::null(),
+                self.cfg.glyph_ranges
+            )
+        };
+    }
+}
+
 impl ImGui {
     pub fn init() -> ImGui {
         ImGui {
@@ -93,6 +138,47 @@ impl ImGui {
     fn io_mut(&mut self) -> &mut sys::ImGuiIO { unsafe { &mut *sys::igGetIO() } }
     pub fn style(&self) -> &ImGuiStyle { unsafe { &*sys::igGetStyle() } }
     pub fn style_mut(&mut self) -> &mut ImGuiStyle { unsafe { &mut *sys::igGetStyle() } }
+    
+    //TODO: find a good way to expose font_cfg and glyph_ranges
+    //TODO: oh god paths are complicated? https://stackoverflow.com/questions/38948669/whats-the-most-direct-way-to-convert-a-path-to-a-c-char
+    /*
+    pub fn add_font_from_file_ttf(font_path: &Path, size_pixels: f32) -> FontBuilder {
+        let io = self.io();
+        unsafe {
+            sys::ImFontAtlas_AddFontFromFileTTF(
+                io.fonts,
+                font_path.as_os_str(),
+                size_pixels,
+                ptr::null(),
+                ptr::null()
+            );
+        }
+    }*/
+    
+    pub fn font_from_memory_ttf(&mut self, mut font_data: Vec<u8>) -> FontBuilder {
+        FontBuilder {
+            io: &mut self.io(),
+            cfg: sys::ImFontConfig {
+                font_data: &mut font_data as *mut _ as *mut c_void,
+                font_data_size: font_data.len() as i32,
+                font_data_owned_by_atlas: false,
+                merge_mode: false,
+                font_no: 0,
+                size_pixels: 13.0,
+                oversample_h: 3,
+                oversample_v: 1,
+                pixel_snap_h: false,
+                glyph_extra_spacing: ImVec2::new(0.0, 0.0),
+                glyph_offset: ImVec2::new(0.0, 0.0),
+                glyph_ranges: unsafe { sys::ImFontAtlas_GetGlyphRangesDefault(self.io().fonts) },
+                rasterizer_flags: 0,
+                rasterizer_multiply: 1.0,
+                
+                dst_font: ptr::null_mut(),
+                name: [0; 32],
+            }
+        }
+    }
     
     pub fn prepare_rgba32_font_texture<'a, F, T>(&mut self, f: F) -> T
     where

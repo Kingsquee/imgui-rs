@@ -732,8 +732,10 @@ pub struct ImFontConfig {
     pub rasterizer_flags: c_uint,
     pub rasterizer_multiply: c_float,
 
-    name: [c_char; 32],
-    dst_font: *mut ImFont,
+	/// internal
+    pub name: [c_char; 32],
+    /// internal
+    pub dst_font: *mut ImFont,
 }
 
 #[repr(C)]
